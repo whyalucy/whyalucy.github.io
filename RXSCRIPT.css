@@ -9,14 +9,16 @@ html, body {
 
 body {
     font-family: Arial, Helvetica, sans-serif;
-    padding: 2rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     color: #ffffff;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
 }
 
 /* Canvas для паутинки (ПОВЕРХ ВСЕГО) */
@@ -33,16 +35,15 @@ body {
 h1 {
     margin-bottom: 1rem;
     letter-spacing: 2px;
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
 }
 
 h2 {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     font-weight: 400;
-}
-
-h3 {
-    font-size: 1.25rem;
-    margin: 0.75rem 0;
+    font-size: clamp(0.9rem, 4vw, 1.2rem);
+    opacity: 0.85;
+    padding: 0 1rem;
 }
 
 a {
@@ -75,10 +76,129 @@ a:focus {
 .background-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.6) 100%);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.7) 100%);
 }
 
 .content {
     max-width: 720px;
-    z-index: 1;
+    width: 100%;
+    z-index: 20;
+    position: relative;
+}
+
+/* ============================================
+   КРАСИВЫЕ КНОПКИ-КАРТОЧКИ (адаптивные)
+   ============================================ */
+.buttons-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    padding: 0 0.5rem;
+}
+
+.social-btn {
+    display: block;
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 3rem;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(20, 20, 30, 0.6);
+    color: white;
+}
+
+.social-btn:hover {
+    transform: scale(1.02);
+    text-decoration: none;
+}
+
+.youtube {
+    border-left: 5px solid #ff0000;
+}
+.youtube:hover {
+    background: rgba(255, 0, 0, 0.2);
+    border-color: #ff0000;
+}
+
+.telegram {
+    border-left: 5px solid #0088cc;
+}
+.telegram:hover {
+    background: rgba(0, 136, 204, 0.2);
+    border-color: #0088cc;
+}
+
+.discord {
+    border-left: 5px solid #5865f2;
+}
+.discord:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: #5865f2;
+}
+
+.hub {
+    border-left: 5px solid #ffaa44;
+}
+.hub:hover {
+    background: rgba(255, 170, 68, 0.2);
+    border-color: #ffaa44;
+}
+
+/* ============================================
+   АДАПТАЦИЯ ПОД ТЕЛЕФОНЫ
+   ============================================ */
+@media (max-width: 768px) {
+    body {
+        padding: 0.75rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+    
+    .social-btn {
+        padding: 0.85rem 1.2rem;
+        font-size: 1rem;
+    }
+    
+    .buttons-grid {
+        gap: 0.8rem;
+    }
+    
+    h1 {
+        margin-bottom: 0.5rem;
+    }
+    
+    h2 {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Для совсем маленьких экранов (iPhone SE) */
+@media (max-width: 480px) {
+    .social-btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    h1 {
+        font-size: 1.6rem;
+    }
+}
+
+/* Для очень больших экранов (десктоп) */
+@media (min-width: 1200px) {
+    .buttons-grid {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .social-btn {
+        min-width: 200px;
+        flex: 1;
+        text-align: center;
+    }
 }
