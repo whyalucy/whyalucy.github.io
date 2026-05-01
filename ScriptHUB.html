@@ -1,3 +1,4 @@
+<!-- hub.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,24 +17,29 @@
         <h2>Click on script to copy</h2>
 
         <div class="script-grid">
-            <div class="script-card" data-script="ContainerRNG">
+            <div class="script-card" data-script="ContainerRNG" data-broken="false">
                 <span class="script-name">CONTAINER RNG</span>
                 <button class="copy-btn" data-script="ContainerRNG">📋 copy</button>
             </div>
             
-            <div class="script-card" data-script="AnimeAbilitiesTower">
+            <div class="script-card" data-script="AnimeAbilitiesTower" data-broken="false">
                 <span class="script-name">Anime Abilities Tower</span>
                 <button class="copy-btn" data-script="AnimeAbilitiesTower">📋 copy</button>
             </div>
 
-            <div class="script-card" data-script="LoopTP">
+            <div class="script-card" data-script="LoopTP" data-broken="false">
                 <span class="script-name">Loop TP</span>
-                <button class="copy-btn" data-script="LoopTP">📋 copy</button>
+                <button class="copy-btn" data-script="LoopTP" style="display: none;">📋 copy</button>
             </div>
 
-            <div class="script-card" data-script="GoKartRaceClicker">
+            <div class="script-card" data-script="GoKartRaceClicker" data-broken="false">
                 <span class="script-name">Go-Kart Race Clicker</span>
                 <button class="copy-btn" data-script="GoKartRaceClicker">📋 copy</button>
+            </div>
+
+            <div class="script-card" data-script="" data-broken="true">
+                <span class="script-name">Fight in a Supermarket!</span>
+                <button class="copy-btn" data-script="">📋 copy</button>
             </div>
             
         </div>
@@ -80,6 +86,16 @@
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 2500);
             }
+
+            // Применяем стили для сломанных скриптов
+            document.querySelectorAll('.script-card').forEach(card => {
+                const isBroken = card.getAttribute('data-broken') === 'true';
+                if (isBroken) {
+                    card.classList.add('broken');
+                    const btn = card.querySelector('.copy-btn');
+                    if (btn) btn.style.display = 'none';
+                }
+            });
 
             document.querySelectorAll('.copy-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
