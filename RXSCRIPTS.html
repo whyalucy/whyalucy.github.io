@@ -23,9 +23,6 @@
     </main>
 
     <script>
-        // ============================================
-        // ПАУТИНКА ПРИ ДВИЖЕНИИ МЫШИ
-        // ============================================
         (function() {
             const canvas = document.getElementById('spiderWebCanvas');
             const ctx = canvas.getContext('2d');
@@ -41,7 +38,6 @@
             
             function initPoints() {
                 points = [];
-                // Создаём случайные точки по всему экрану (60 точек для густой сети)
                 for(let i = 0; i < 60; i++) {
                     points.push({
                         x: Math.random() * canvas.width,
@@ -58,7 +54,6 @@
                     p.x += p.vx;
                     p.y += p.vy;
                     
-                    // Отталкивание от границ
                     if(p.x < 0) { p.x = 0; p.vx *= -0.8; }
                     if(p.x > canvas.width) { p.x = canvas.width; p.vx *= -0.8; }
                     if(p.y < 0) { p.y = 0; p.vy *= -0.8; }
@@ -70,8 +65,7 @@
                 if(!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Рисуем линии между точками (если расстояние меньше порога)
-                const maxDist = 220;
+                const maxDist = 250;
                 for(let i = 0; i < points.length; i++) {
                     for(let j = i + 1; j < points.length; j++) {
                         const dx = points[i].x - points[j].x;
@@ -90,7 +84,6 @@
                     }
                 }
                 
-                // Рисуем линии от мыши к ближайшим точкам
                 for(let i = 0; i < points.length; i++) {
                     const dx = points[i].x - mouseX;
                     const dy = points[i].y - mouseY;
@@ -107,7 +100,6 @@
                     }
                 }
                 
-                // Рисуем точки
                 for(let i = 0; i < points.length; i++) {
                     ctx.beginPath();
                     ctx.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2);
@@ -115,7 +107,6 @@
                     ctx.fill();
                 }
                 
-                // Маленький кружок под мышью
                 ctx.beginPath();
                 ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
                 ctx.fillStyle = `rgba(255, 255, 255, 0.25)`;
