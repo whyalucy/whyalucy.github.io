@@ -1,4 +1,3 @@
-<!-- hub.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +7,8 @@
     <link rel="stylesheet" href="hub.css">
 </head>
 <body>
+    <canvas id="spiderWebCanvas"></canvas>
+    
     <div class="background">
         <img src="backgroundimg.jpg" alt="RXScripts hub background">
         <div class="background-overlay"></div>
@@ -35,11 +36,6 @@
             <div class="script-card" data-script="GoKartRaceClicker" data-broken="false">
                 <span class="script-name">Go-Kart Race Clicker</span>
                 <button class="copy-btn" data-script="GoKartRaceClicker">📋 copy</button>
-            </div>
-
-            <div class="script-card" data-script="none" data-broken="true">
-                <span class="script-name">Fight in a Supermarket!</span>
-                <button class="copy-btn" data-script="">📋 copy</button>
             </div>
             
         </div>
@@ -87,7 +83,6 @@
                 setTimeout(() => toast.remove(), 2500);
             }
 
-            // Применяем стили для сломанных скриптов
             document.querySelectorAll('.script-card').forEach(card => {
                 const isBroken = card.getAttribute('data-broken') === 'true';
                 if (isBroken) {
@@ -109,6 +104,122 @@
                     }
                 });
             });
+        })();
+
+        (function() {
+            const canvas = document.getElementById('spiderWebCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            let mouseX = 0, mouseY = 0;
+            let points = [];
+            let animationId = null;
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            function initPoints() {
+                points = [];
+                for(let i = 0; i < 60; i++) {
+                    points.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.3,
+                        vy: (Math.random() - 0.5) * 0.3
+                    });
+                }
+            }
+            
+            function updatePoints() {
+                for(let i = 0; i < points.length; i++) {
+                    let p = points[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    
+                    if(p.x < 0) { p.x = 0; p.vx *= -0.8; }
+                    if(p.x > canvas.width) { p.x = canvas.width; p.vx *= -0.8; }
+                    if(p.y < 0) { p.y = 0; p.vy *= -0.8; }
+                    if(p.y > canvas.height) { p.y = canvas.height; p.vy *= -0.8; }
+                }
+            }
+            
+            function drawWeb() {
+                if(!ctx) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                const maxDist = 250;
+                for(let i = 0; i < points.length; i++) {
+                    for(let j = i + 1; j < points.length; j++) {
+                        const dx = points[i].x - points[j].x;
+                        const dy = points[i].y - points[j].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if(dist < maxDist) {
+                            const opacity = (1 - dist / maxDist) * 0.3;
+                            ctx.beginPath();
+                            ctx.moveTo(points[i].x, points[i].y);
+                            ctx.lineTo(points[j].x, points[j].y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                for(let i = 0; i < points.length; i++) {
+                    const dx = points[i].x - mouseX;
+                    const dy = points[i].y - mouseY;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    
+                    if(dist < 200) {
+                        const opacity = (1 - dist / 200) * 0.4;
+                        ctx.beginPath();
+                        ctx.moveTo(mouseX, mouseY);
+                        ctx.lineTo(points[i].x, points[i].y);
+                        ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.stroke();
+                    }
+                }
+                
+                for(let i = 0; i < points.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
+                    ctx.fill();
+                }
+                
+                ctx.beginPath();
+                ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
+                ctx.fill();
+            }
+            
+            function animate() {
+                if(!canvas.isConnected) return;
+                updatePoints();
+                drawWeb();
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            function onMouseMove(e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            }
+            
+            function init() {
+                resizeCanvas();
+                initPoints();
+                window.addEventListener('resize', () => {
+                    resizeCanvas();
+                    initPoints();
+                });
+                window.addEventListener('mousemove', onMouseMove);
+                animate();
+            }
+            
+            init();
         })();
     </script>
 </body>
