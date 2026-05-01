@@ -29,7 +29,6 @@
         <div class="game-controls">
             <button id="startBtn" class="game-btn">▶ START GAME</button>
             <button id="backBtn" class="game-btn back">◀ BACK TO HUB</button>
-            <button id="backBtn" class="game-btn back">◀ BACK TO MAIN</button>
         </div>
         <div class="game-info">
             💡 Click on glowing spots before they disappear!<br>
@@ -39,7 +38,7 @@
 
     <script>
         // ============================================
-        // ФОН ПАУТИНКА (как на всех страницах)
+        // ФОН ПАУТИНКА
         // ============================================
         (function() {
             const canvas = document.getElementById('spiderWebCanvas');
@@ -58,7 +57,7 @@
             
             function initPoints() {
                 points = [];
-                const pointCount = isMobile ? 25 : 60;
+                const pointCount = isMobile ? 25 : 50;
                 for(let i = 0; i < pointCount; i++) {
                     points.push({
                         x: Math.random() * canvas.width,
@@ -101,18 +100,18 @@
                         }
                     }
                 }
-                if(!isMobile && mouseX > 0 && mouseY > 0) {
+                if(!isMobile && (mouseX > 0 || mouseY > 0)) {
                     for(let i = 0; i < points.length; i++) {
                         const dx = points[i].x - mouseX;
                         const dy = points[i].y - mouseY;
                         const dist = Math.sqrt(dx*dx + dy*dy);
-                        if(dist < 250) {
-                            const opacity = (1 - dist / 250) * 0.4;
+                        if(dist < 200) {
+                            const opacity = (1 - dist / 200) * 0.4;
                             ctx.beginPath();
                             ctx.moveTo(mouseX, mouseY);
                             ctx.lineTo(points[i].x, points[i].y);
                             ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
-                            ctx.lineWidth = isMobile ? 0.5 : 0.7;
+                            ctx.lineWidth = isMobile ? 0.5 : 0.6;
                             ctx.stroke();
                         }
                     }
@@ -120,7 +119,7 @@
                 for(let i = 0; i < points.length; i++) {
                     ctx.beginPath();
                     ctx.arc(points[i].x, points[i].y, isMobile ? 1 : 1.5, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
+                    ctx.fillStyle = `rgba(255, 255, 255, ${isMobile ? 0.4 : 0.5})`;
                     ctx.fill();
                 }
             }
@@ -138,6 +137,14 @@
                 mouseY = e.clientY;
             }
             
+            function onTouchMove(e) {
+                if(!isMobile) return;
+                if(e.touches.length > 0) {
+                    mouseX = e.touches[0].clientX;
+                    mouseY = e.touches[0].clientY;
+                }
+            }
+            
             function init() {
                 resizeCanvas();
                 initPoints();
@@ -145,7 +152,9 @@
                     resizeCanvas();
                     initPoints();
                 });
-                if(!isMobile) {
+                if(isMobile) {
+                    window.addEventListener('touchmove', onTouchMove);
+                } else {
                     window.addEventListener('mousemove', onMouseMove);
                 }
                 animate();
@@ -154,7 +163,7 @@
         })();
 
         // ============================================
-        // ИГРА WEB OF CLICKS
+        // ИГРА WEB OF CLICKS (ИСПРАВЛЕННАЯ)
         // ============================================
         (function() {
             const canvas = document.getElementById('gameCanvas');
@@ -164,8 +173,8 @@
             let combo = 0;
             let timeLeft = 30;
             let gameActive = false;
-            let gameInterval = null;
             let spawnInterval = null;
+            let gameInterval = null;
             
             let spots = [];
             let particles = [];
@@ -185,11 +194,11 @@
             }
             
             function addParticle(x, y) {
-                for(let i = 0; i < 8; i++) {
+                for(let i = 0; i < 10; i++) {
                     particles.push({
                         x: x, y: y,
-                        vx: (Math.random() - 0.5) * 4,
-                        vy: (Math.random() - 0.5) * 4,
+                        vx: (Math.random() - 0.5) * 5,
+                        vy: (Math.random() - 0.5) * 5,
                         life: 1,
                         size: Math.random() * 4 + 2
                     });
@@ -200,28 +209,11 @@
                 if(!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Фон
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                // Полупрозрачный фон
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Рисуем след мыши (нить паутины)
-                if(mouseX > 0 && mouseY > 0) {
-                    ctx.beginPath();
-                    ctx.moveTo(mouseX, mouseY);
-                    for(let i = 0; i < spots.length; i++) {
-                        const dx = spots[i].x - mouseX;
-                        const dy = spots[i].y - mouseY;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
-                        if(dist < 100) {
-                            ctx.lineTo(spots[i].x, spots[i].y);
-                        }
-                    }
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-                
-                // Рисуем частицы
+                // Частицы
                 for(let i = particles.length-1; i >= 0; i--) {
                     let p = particles[i];
                     p.x += p.vx;
@@ -237,34 +229,34 @@
                     ctx.fill();
                 }
                 
-                // Рисуем споты
+                // Споты
                 for(let i = 0; i < spots.length; i++) {
                     let s = spots[i];
-                    const pulse = 0.8 + Math.sin(Date.now() * 0.008 * s.pulseSpeed) * 0.2;
+                    const pulse = 0.7 + Math.sin(Date.now() * 0.008 * s.pulseSpeed) * 0.3;
                     
-                    // Внешнее свечение
+                    // Свечение
                     ctx.beginPath();
-                    ctx.arc(s.x, s.y, (s.size + 5) * pulse, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(100, 200, 255, 0.15)`;
+                    ctx.arc(s.x, s.y, (s.size + 8) * pulse, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(80, 180, 255, 0.2)`;
                     ctx.fill();
                     
                     // Основной круг
                     ctx.beginPath();
                     ctx.arc(s.x, s.y, s.size * pulse, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(80, 180, 255, 0.6)`;
+                    ctx.fillStyle = `rgba(80, 180, 255, 0.8)`;
                     ctx.fill();
                     
-                    // Внутренний блик
+                    // Блик
                     ctx.beginPath();
                     ctx.arc(s.x - 2, s.y - 2, s.size * 0.3, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, 0.8)`;
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.9)`;
                     ctx.fill();
                     
                     // Текст с очками
-                    ctx.font = `${s.size * 0.8}px Arial`;
+                    ctx.font = `bold ${s.size * 0.8}px Arial`;
                     ctx.fillStyle = 'white';
-                    ctx.shadowBlur = 5;
-                    ctx.fillText(`+${s.points}`, s.x - 10, s.y - s.size - 5);
+                    ctx.shadowBlur = 4;
+                    ctx.fillText(`+${s.points}`, s.x - 12, s.y - s.size - 5);
                     ctx.shadowBlur = 0;
                 }
             }
@@ -273,14 +265,15 @@
                 if(!gameActive) return;
                 const x = 50 + Math.random() * (canvas.width - 100);
                 const y = 50 + Math.random() * (canvas.height - 100);
-                const points = 10 + Math.floor(combo / 5) * 5;
+                const pointsValue = 10 + Math.floor(combo / 5) * 5;
                 spots.push({
                     x: x, y: y,
-                    size: 15,
-                    points: Math.min(points, 50),
-                    life: 1,
-                    pulseSpeed: 0.5 + Math.random() * 0.5
+                    size: 18,
+                    points: Math.min(pointsValue, 50),
+                    pulseSpeed: 0.5 + Math.random() * 0.5,
+                    life: 1
                 });
+                console.log("Спот появился!", x, y); // Отладка
             }
             
             function checkClick(e) {
@@ -288,8 +281,16 @@
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
-                let clickX = (e.clientX - rect.left) * scaleX;
-                let clickY = (e.clientY - rect.top) * scaleY;
+                
+                let clickX, clickY;
+                if(e.touches) {
+                    clickX = (e.touches[0].clientX - rect.left) * scaleX;
+                    clickY = (e.touches[0].clientY - rect.top) * scaleY;
+                    e.preventDefault();
+                } else {
+                    clickX = (e.clientX - rect.left) * scaleX;
+                    clickY = (e.clientY - rect.top) * scaleY;
+                }
                 
                 for(let i = 0; i < spots.length; i++) {
                     let s = spots[i];
@@ -305,34 +306,17 @@
                         return;
                     }
                 }
-                // Промах — сброс комбо
-                combo = 0;
-                updateUI();
-            }
-            
-            function updateGame() {
-                if(!gameActive) return;
-                timeLeft -= 0.02;
-                if(timeLeft <= 0) {
-                    endGame();
-                    return;
+                // Промах
+                if(spots.length > 0) {
+                    combo = 0;
+                    updateUI();
                 }
-                updateUI();
-                draw();
-                requestAnimationFrame(updateGame);
             }
             
-            function endGame() {
-                gameActive = false;
-                if(spawnInterval) clearInterval(spawnInterval);
-                if(gameInterval) clearInterval(gameInterval);
-                spawnInterval = null;
-                gameInterval = null;
-                spots = [];
+            function gameLoop() {
+                if(!gameActive) return;
                 draw();
-                alert(`GAME OVER!\nYour score: ${score}\nCombo: ${combo}x`);
-                document.getElementById('startBtn').disabled = false;
-                document.getElementById('startBtn').textContent = '▶ PLAY AGAIN';
+                requestAnimationFrame(gameLoop);
             }
             
             function startGame() {
@@ -355,15 +339,29 @@
                     if(timeLeft <= 0) endGame();
                 }, 100);
                 
-                draw();
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('startBtn').textContent = '🎮 PLAYING...';
+                draw();
+            }
+            
+            function endGame() {
+                gameActive = false;
+                if(spawnInterval) clearInterval(spawnInterval);
+                if(gameInterval) clearInterval(gameInterval);
+                spawnInterval = null;
+                gameInterval = null;
+                spots = [];
+                draw();
+                alert(`GAME OVER!\nScore: ${score}\nCombo: ${combo}x`);
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = '▶ PLAY AGAIN';
             }
             
             function initGame() {
                 resizeGameCanvas();
                 window.addEventListener('resize', resizeGameCanvas);
                 canvas.addEventListener('click', checkClick);
+                canvas.addEventListener('touchstart', checkClick, {passive: false});
                 canvas.addEventListener('mousemove', (e) => {
                     const rect = canvas.getBoundingClientRect();
                     const scaleX = canvas.width / rect.width;
@@ -380,6 +378,7 @@
             });
             
             initGame();
+            gameLoop();
         })();
     </script>
 </body>
