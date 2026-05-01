@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RXSCRIPTS · Script Hub</title>
+    <link rel="stylesheet" href="hub.css">
+</head>
+<body>
+    <div class="background">
+        <img src="backgroundimg.jpg" alt="RXScripts hub background">
+        <div class="background-overlay"></div>
+    </div>
+    <main class="content">
+        <h1>📁 RXSCRIPTS · HUB</h1>
+        <h2>Click on script to copy</h2>
+
+        <div class="script-grid">
+            <div class="script-card" data-script="ContainerRNG">
+                <span class="script-name">🎲 CONTAINER RNG</span>
+                <button class="copy-btn" data-script="ContainerRNG">📋 copy</button>
+            </div>
+            <div class="script-card" data-script="MineWithGuns">
+                <span class="script-name">🔫 MINE WITH GUNS</span>
+                <button class="copy-btn" data-script="MineWithGuns">📋 copy</button>
+            </div>
+            <div class="script-card" data-script="KillAura">
+                <span class="script-name">👊 KILL AURA</span>
+                <button class="copy-btn" data-script="KillAura">📋 copy</button>
+            </div>
+            <div class="script-card" data-script="AutoFarmProTower">
+                <span class="script-name">⚙️ AUTO FARM (PRO TOWER)</span>
+                <button class="copy-btn" data-script="AutoFarmProTower">📋 copy</button>
+            </div>
+            <div class="script-card" data-script="SlapTowerBadges">
+                <span class="script-name">🏅 SLAP TOWER BADGES</span>
+                <button class="copy-btn" data-script="SlapTowerBadges">📋 copy</button>
+            </div>
+            <div class="script-card" data-script="UniversalTeleport">
+                <span class="script-name">🌀 UNIVERSAL TELEPORT</span>
+                <button class="copy-btn" data-script="UniversalTeleport">📋 copy</button>
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a href="https://whyalucy.github.io/RXSCRIPTS.html">◀ back to main page</a>
+        </div>
+    </main>
+
+    <script>
+        (function() {
+            const scripts = {
+                ContainerRNG:        'loadstring(game:HttpGet("https://pastebin.com/raw/XXXXXXX"))()',
+                MineWithGuns:        'loadstring(game:HttpGet("https://pastebin.com/raw/YYYYYYY"))()',
+                KillAura:            'loadstring(game:HttpGet("https://pastebin.com/raw/ZZZZZZZ"))()',
+                AutoFarmProTower:    'loadstring(game:HttpGet("https://pastebin.com/raw/AAAAAAAAA"))()',
+                SlapTowerBadges:     'loadstring(game:HttpGet("https://pastebin.com/raw/BBBBBBBB"))()',
+                UniversalTeleport:   'loadstring(game:HttpGet("https://pastebin.com/raw/CCCCCCCC"))()'
+            };
+
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast("✅ Script copied to clipboard!");
+                }).catch(() => {
+                    showToast("❌ Failed to copy. Select manually.", true);
+                });
+            }
+
+            function showToast(msg, isError = false) {
+                let toast = document.createElement('div');
+                toast.className = 'toast-message';
+                toast.textContent = msg;
+                if (isError) toast.style.background = '#b33';
+                toast.style.position = 'fixed';
+                toast.style.bottom = '20px';
+                toast.style.left = '50%';
+                toast.style.transform = 'translateX(-50%)';
+                toast.style.background = isError ? '#b33' : '#2a6f4f';
+                toast.style.color = '#fff';
+                toast.style.padding = '10px 20px';
+                toast.style.borderRadius = '40px';
+                toast.style.fontSize = '0.9rem';
+                toast.style.fontWeight = 'bold';
+                toast.style.zIndex = '9999';
+                toast.style.boxShadow = '0 0 10px rgba(0,0,0,0.3)';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2500);
+            }
+
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const scriptKey = btn.getAttribute('data-script');
+                    const scriptCode = scripts[scriptKey];
+                    if (scriptCode) {
+                        copyToClipboard(scriptCode);
+                    } else {
+                        showToast("❌ Script code not set yet (edit hub.html)", true);
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
