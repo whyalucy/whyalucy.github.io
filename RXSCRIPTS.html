@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>RXSCRIPTS</title>
     <link rel="stylesheet" href="RXSCRIPT.css">
 </head>
@@ -16,20 +16,27 @@
     <main class="content">
         <h1>WELCOME TO RXSCRIPTS</h1>
         <h2>I would be very grateful if you subscribe to my YouTube and telegram channel.</h2>
-        <h3><a href="https://www.youtube.com/@onexale">RXScripts YouTube</a></h3>
-        <h3><a href="https://t.me/robloxrxscripts">RXScripts Telegram</a></h3>
-        <h3><a href="http://discordapp.com/users/715915325421518958">RXScripts Discord</a></h3>
-        <h3><a href="https://whyalucy.github.io/ScriptHUB.html">Script HUB</a></h3>
+        <div class="buttons-grid">
+            <a href="https://www.youtube.com/@onexale" class="social-btn youtube">▶ YouTube</a>
+            <a href="https://t.me/robloxrxscripts" class="social-btn telegram">📱 Telegram</a>
+            <a href="http://discordapp.com/users/715915325421518958" class="social-btn discord">🎮 Discord</a>
+            <a href="https://whyalucy.github.io/ScriptHUB.html" class="social-btn hub">📁 Script HUB</a>
+        </div>
     </main>
 
     <script>
+        // ============================================
+        // ПАУТИНКА (оптимизирована для мобилок)
+        // ============================================
         (function() {
             const canvas = document.getElementById('spiderWebCanvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             
             let mouseX = 0, mouseY = 0;
             let points = [];
             let animationId = null;
+            let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
@@ -38,7 +45,10 @@
             
             function initPoints() {
                 points = [];
-                for(let i = 0; i < 60; i++) {
+                // На телефонах меньше точек для производительности
+                const pointCount = isMobile ? 25 : 60;
+                
+                for(let i = 0; i < pointCount; i++) {
                     points.push({
                         x: Math.random() * canvas.width,
                         y: Math.random() * canvas.height,
@@ -65,7 +75,9 @@
                 if(!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                const maxDist = 250;
+                // На телефонах меньше дальность соединения
+                const maxDist = isMobile ? 150 : 250;
+                
                 for(let i = 0; i < points.length; i++) {
                     for(let j = i + 1; j < points.length; j++) {
                         const dx = points[i].x - points[j].x;
@@ -78,39 +90,40 @@
                             ctx.moveTo(points[i].x, points[i].y);
                             ctx.lineTo(points[j].x, points[j].y);
                             ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                            ctx.lineWidth = 0.8;
+                            ctx.lineWidth = isMobile ? 0.5 : 0.8;
                             ctx.stroke();
                         }
                     }
                 }
                 
-                for(let i = 0; i < points.length; i++) {
-                    const dx = points[i].x - mouseX;
-                    const dy = points[i].y - mouseY;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if(dist < 250) {
-                        const opacity = (1 - dist / 250) * 0.45;
-                        ctx.beginPath();
-                        ctx.moveTo(mouseX, mouseY);
-                        ctx.lineTo(points[i].x, points[i].y);
-                        ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
-                        ctx.lineWidth = 0.7;
-                        ctx.stroke();
+                // Линии от мыши (только на десктопе, на мобилках нет мыши)
+                if(!isMobile && mouseX > 0 && mouseY > 0) {
+                    for(let i = 0; i < points.length; i++) {
+                        const dx = points[i].x - mouseX;
+                        const dy = points[i].y - mouseY;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if(dist < 200) {
+                            const opacity = (1 - dist / 300) * 0.45;
+                            ctx.beginPath();
+                            ctx.moveTo(mouseX, mouseY);
+                            ctx.lineTo(points[i].x, points[i].y);
+                            ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
+                            ctx.lineWidth = isMobile ? 0.5 : 0.7;
+                            ctx.stroke();
+                        }
                     }
                 }
                 
+                // Рисуем точки (на телефонах меньше и прозрачнее)
+                const pointSize = isMobile ? 1 : 1.5;
+                const pointOpacity = isMobile ? 0.4 : 0.5;
                 for(let i = 0; i < points.length; i++) {
                     ctx.beginPath();
-                    ctx.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
+                    ctx.arc(points[i].x, points[i].y, pointSize, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${pointOpacity})`;
                     ctx.fill();
                 }
-                
-                ctx.beginPath();
-                ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, 0.25)`;
-                ctx.fill();
             }
             
             function animate() {
@@ -121,6 +134,7 @@
             }
             
             function onMouseMove(e) {
+                if(isMobile) return;
                 mouseX = e.clientX;
                 mouseY = e.clientY;
             }
@@ -132,7 +146,9 @@
                     resizeCanvas();
                     initPoints();
                 });
-                window.addEventListener('mousemove', onMouseMove);
+                if(!isMobile) {
+                    window.addEventListener('mousemove', onMouseMove);
+                }
                 animate();
             }
             
