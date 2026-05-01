@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>RXSCRIPTS · Script Hub</title>
     <link rel="stylesheet" href="hub.css">
 </head>
@@ -106,6 +106,9 @@
             });
         })();
 
+        // ============================================
+        // ПАУТИНКА (ОПТИМИЗИРОВАНА ДЛЯ МОБИЛОК)
+        // ============================================
         (function() {
             const canvas = document.getElementById('spiderWebCanvas');
             const ctx = canvas.getContext('2d');
@@ -113,6 +116,7 @@
             let mouseX = 0, mouseY = 0;
             let points = [];
             let animationId = null;
+            let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             
             function resizeCanvas() {
                 canvas.width = window.innerWidth;
@@ -121,7 +125,9 @@
             
             function initPoints() {
                 points = [];
-                for(let i = 0; i < 60; i++) {
+                // На телефонах меньше точек для производительности
+                const pointCount = isMobile ? 25 : 60;
+                for(let i = 0; i < pointCount; i++) {
                     points.push({
                         x: Math.random() * canvas.width,
                         y: Math.random() * canvas.height,
@@ -148,7 +154,10 @@
                 if(!ctx) return;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                const maxDist = 250;
+                // На телефонах меньше дальность соединения
+                const maxDist = isMobile ? 150 : 250;
+                const lineWidth = isMobile ? 0.5 : 0.8;
+                
                 for(let i = 0; i < points.length; i++) {
                     for(let j = i + 1; j < points.length; j++) {
                         const dx = points[i].x - points[j].x;
@@ -161,39 +170,48 @@
                             ctx.moveTo(points[i].x, points[i].y);
                             ctx.lineTo(points[j].x, points[j].y);
                             ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
-                            ctx.lineWidth = 0.8;
+                            ctx.lineWidth = lineWidth;
                             ctx.stroke();
                         }
                     }
                 }
                 
-                for(let i = 0; i < points.length; i++) {
-                    const dx = points[i].x - mouseX;
-                    const dy = points[i].y - mouseY;
-                    const dist = Math.sqrt(dx*dx + dy*dy);
-                    
-                    if(dist < 200) {
-                        const opacity = (1 - dist / 200) * 0.4;
-                        ctx.beginPath();
-                        ctx.moveTo(mouseX, mouseY);
-                        ctx.lineTo(points[i].x, points[i].y);
-                        ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
-                        ctx.lineWidth = 0.6;
-                        ctx.stroke();
+                // Линии от мыши/касания (только если есть движение)
+                if(!isMobile && (mouseX > 0 || mouseY > 0)) {
+                    for(let i = 0; i < points.length; i++) {
+                        const dx = points[i].x - mouseX;
+                        const dy = points[i].y - mouseY;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        
+                        if(dist < 200) {
+                            const opacity = (1 - dist / 300) * 0.4;
+                            ctx.beginPath();
+                            ctx.moveTo(mouseX, mouseY);
+                            ctx.lineTo(points[i].x, points[i].y);
+                            ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
+                            ctx.lineWidth = lineWidth;
+                            ctx.stroke();
+                        }
                     }
                 }
                 
+                // Рисуем точки (на телефонах меньше и прозрачнее)
+                const pointSize = isMobile ? 1 : 1.5;
+                const pointOpacity = isMobile ? 0.4 : 0.5;
                 for(let i = 0; i < points.length; i++) {
                     ctx.beginPath();
-                    ctx.arc(points[i].x, points[i].y, 1.5, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
+                    ctx.arc(points[i].x, points[i].y, pointSize, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${pointOpacity})`;
                     ctx.fill();
                 }
                 
-                ctx.beginPath();
-                ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(255, 255, 255, 0.3)`;
-                ctx.fill();
+                // Кружок под мышью/касанием (только на десктопе)
+                if(!isMobile && (mouseX > 0 || mouseY > 0)) {
+                    ctx.beginPath();
+                    ctx.arc(mouseX, mouseY, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.25)`;
+                    ctx.fill();
+                }
             }
             
             function animate() {
@@ -204,8 +222,24 @@
             }
             
             function onMouseMove(e) {
+                if(isMobile) return;
                 mouseX = e.clientX;
                 mouseY = e.clientY;
+            }
+            
+            // Для мобилок — отслеживаем касания
+            function onTouchMove(e) {
+                if(!isMobile) return;
+                if(e.touches.length > 0) {
+                    mouseX = e.touches[0].clientX;
+                    mouseY = e.touches[0].clientY;
+                }
+            }
+            
+            function onTouchEnd() {
+                if(!isMobile) return;
+                mouseX = 0;
+                mouseY = 0;
             }
             
             function init() {
@@ -215,7 +249,14 @@
                     resizeCanvas();
                     initPoints();
                 });
-                window.addEventListener('mousemove', onMouseMove);
+                
+                if(isMobile) {
+                    window.addEventListener('touchmove', onTouchMove);
+                    window.addEventListener('touchend', onTouchEnd);
+                } else {
+                    window.addEventListener('mousemove', onMouseMove);
+                }
+                
                 animate();
             }
             
