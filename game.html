@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>WEB OF CLICKS · RXSCRIPTS</title>
+    <link rel="stylesheet" href="game.css">
+</head>
+<body>
+    <canvas id="spiderWebCanvas"></canvas>
+    
+    <div class="background">
+        <img src="backgroundimg.jpg" alt="RXScripts background">
+        <div class="background-overlay"></div>
+    </div>
+
+    <div class="game-container">
+        <div class="game-header">
+            <h1>🕷️ WEB OF CLICKS</h1>
+            <div class="stats">
+                <div class="stat">🎯 SCORE: <span id="score">0</span></div>
+                <div class="stat">⚡ COMBO: <span id="combo">0</span>x</div>
+                <div class="stat">⏱️ TIME: <span id="timer">30</span>s</div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+        <div class="game-controls">
+            <button id="startBtn" class="game-btn">▶ START GAME</button>
+            <button id="backBtn" class="game-btn back">◀ BACK TO HUB</button>
+        </div>
+        <div class="game-info">
+            💡 Click on glowing spots before they disappear!<br>
+            Each hit gives +10 points and increases combo. Miss = combo reset.
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // ФОН ПАУТИНКА (как на всех страницах)
+        // ============================================
+        (function() {
+            const canvas = document.getElementById('spiderWebCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            let mouseX = 0, mouseY = 0;
+            let points = [];
+            let animationId = null;
+            let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            function initPoints() {
+                points = [];
+                const pointCount = isMobile ? 25 : 60;
+                for(let i = 0; i < pointCount; i++) {
+                    points.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height,
+                        vx: (Math.random() - 0.5) * 0.3,
+                        vy: (Math.random() - 0.5) * 0.3
+                    });
+                }
+            }
+            
+            function updatePoints() {
+                for(let i = 0; i < points.length; i++) {
+                    let p = points[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    if(p.x < 0) { p.x = 0; p.vx *= -0.8; }
+                    if(p.x > canvas.width) { p.x = canvas.width; p.vx *= -0.8; }
+                    if(p.y < 0) { p.y = 0; p.vy *= -0.8; }
+                    if(p.y > canvas.height) { p.y = canvas.height; p.vy *= -0.8; }
+                }
+            }
+            
+            function drawWeb() {
+                if(!ctx) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const maxDist = isMobile ? 150 : 250;
+                for(let i = 0; i < points.length; i++) {
+                    for(let j = i + 1; j < points.length; j++) {
+                        const dx = points[i].x - points[j].x;
+                        const dy = points[i].y - points[j].y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < maxDist) {
+                            const opacity = (1 - dist / maxDist) * 0.3;
+                            ctx.beginPath();
+                            ctx.moveTo(points[i].x, points[i].y);
+                            ctx.lineTo(points[j].x, points[j].y);
+                            ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                            ctx.lineWidth = isMobile ? 0.5 : 0.8;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                if(!isMobile && mouseX > 0 && mouseY > 0) {
+                    for(let i = 0; i < points.length; i++) {
+                        const dx = points[i].x - mouseX;
+                        const dy = points[i].y - mouseY;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 250) {
+                            const opacity = (1 - dist / 250) * 0.4;
+                            ctx.beginPath();
+                            ctx.moveTo(mouseX, mouseY);
+                            ctx.lineTo(points[i].x, points[i].y);
+                            ctx.strokeStyle = `rgba(220, 220, 255, ${opacity})`;
+                            ctx.lineWidth = isMobile ? 0.5 : 0.7;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                for(let i = 0; i < points.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(points[i].x, points[i].y, isMobile ? 1 : 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
+                    ctx.fill();
+                }
+            }
+            
+            function animate() {
+                if(!canvas.isConnected) return;
+                updatePoints();
+                drawWeb();
+                animationId = requestAnimationFrame(animate);
+            }
+            
+            function onMouseMove(e) {
+                if(isMobile) return;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            }
+            
+            function init() {
+                resizeCanvas();
+                initPoints();
+                window.addEventListener('resize', () => {
+                    resizeCanvas();
+                    initPoints();
+                });
+                if(!isMobile) {
+                    window.addEventListener('mousemove', onMouseMove);
+                }
+                animate();
+            }
+            init();
+        })();
+
+        // ============================================
+        // ИГРА WEB OF CLICKS
+        // ============================================
+        (function() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            let score = 0;
+            let combo = 0;
+            let timeLeft = 30;
+            let gameActive = false;
+            let gameInterval = null;
+            let spawnInterval = null;
+            
+            let spots = [];
+            let particles = [];
+            let mouseX = 0, mouseY = 0;
+            
+            function resizeGameCanvas() {
+                const container = canvas.parentElement;
+                const maxWidth = Math.min(800, window.innerWidth - 40);
+                canvas.style.width = `${maxWidth}px`;
+                canvas.style.height = 'auto';
+            }
+            
+            function updateUI() {
+                document.getElementById('score').textContent = score;
+                document.getElementById('combo').textContent = combo;
+                document.getElementById('timer').textContent = Math.ceil(timeLeft);
+            }
+            
+            function addParticle(x, y) {
+                for(let i = 0; i < 8; i++) {
+                    particles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        life: 1,
+                        size: Math.random() * 4 + 2
+                    });
+                }
+            }
+            
+            function draw() {
+                if(!ctx) return;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Фон
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Рисуем след мыши (нить паутины)
+                if(mouseX > 0 && mouseY > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(mouseX, mouseY);
+                    for(let i = 0; i < spots.length; i++) {
+                        const dx = spots[i].x - mouseX;
+                        const dy = spots[i].y - mouseY;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist < 100) {
+                            ctx.lineTo(spots[i].x, spots[i].y);
+                        }
+                    }
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                // Рисуем частицы
+                for(let i = particles.length-1; i >= 0; i--) {
+                    let p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.life -= 0.03;
+                    if(p.life <= 0) {
+                        particles.splice(i,1);
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 200, 100, ${p.life * 0.8})`;
+                    ctx.fill();
+                }
+                
+                // Рисуем споты
+                for(let i = 0; i < spots.length; i++) {
+                    let s = spots[i];
+                    const pulse = 0.8 + Math.sin(Date.now() * 0.008 * s.pulseSpeed) * 0.2;
+                    
+                    // Внешнее свечение
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, (s.size + 5) * pulse, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(100, 200, 255, 0.15)`;
+                    ctx.fill();
+                    
+                    // Основной круг
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size * pulse, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(80, 180, 255, 0.6)`;
+                    ctx.fill();
+                    
+                    // Внутренний блик
+                    ctx.beginPath();
+                    ctx.arc(s.x - 2, s.y - 2, s.size * 0.3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.8)`;
+                    ctx.fill();
+                    
+                    // Текст с очками
+                    ctx.font = `${s.size * 0.8}px Arial`;
+                    ctx.fillStyle = 'white';
+                    ctx.shadowBlur = 5;
+                    ctx.fillText(`+${s.points}`, s.x - 10, s.y - s.size - 5);
+                    ctx.shadowBlur = 0;
+                }
+            }
+            
+            function spawnSpot() {
+                if(!gameActive) return;
+                const x = 50 + Math.random() * (canvas.width - 100);
+                const y = 50 + Math.random() * (canvas.height - 100);
+                const points = 10 + Math.floor(combo / 5) * 5;
+                spots.push({
+                    x: x, y: y,
+                    size: 15,
+                    points: Math.min(points, 50),
+                    life: 1,
+                    pulseSpeed: 0.5 + Math.random() * 0.5
+                });
+            }
+            
+            function checkClick(e) {
+                if(!gameActive) return;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let clickX = (e.clientX - rect.left) * scaleX;
+                let clickY = (e.clientY - rect.top) * scaleY;
+                
+                for(let i = 0; i < spots.length; i++) {
+                    let s = spots[i];
+                    const dx = clickX - s.x;
+                    const dy = clickY - s.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist < s.size) {
+                        score += s.points;
+                        combo = Math.min(combo + 1, 50);
+                        addParticle(s.x, s.y);
+                        spots.splice(i,1);
+                        updateUI();
+                        return;
+                    }
+                }
+                // Промах — сброс комбо
+                combo = 0;
+                updateUI();
+            }
+            
+            function updateGame() {
+                if(!gameActive) return;
+                timeLeft -= 0.02;
+                if(timeLeft <= 0) {
+                    endGame();
+                    return;
+                }
+                updateUI();
+                draw();
+                requestAnimationFrame(updateGame);
+            }
+            
+            function endGame() {
+                gameActive = false;
+                if(spawnInterval) clearInterval(spawnInterval);
+                if(gameInterval) clearInterval(gameInterval);
+                spawnInterval = null;
+                gameInterval = null;
+                spots = [];
+                draw();
+                alert(`GAME OVER!\nYour score: ${score}\nCombo: ${combo}x`);
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = '▶ PLAY AGAIN';
+            }
+            
+            function startGame() {
+                score = 0;
+                combo = 0;
+                timeLeft = 30;
+                spots = [];
+                particles = [];
+                gameActive = true;
+                updateUI();
+                
+                if(spawnInterval) clearInterval(spawnInterval);
+                if(gameInterval) clearInterval(gameInterval);
+                
+                spawnInterval = setInterval(() => spawnSpot(), 800);
+                gameInterval = setInterval(() => {
+                    if(!gameActive) return;
+                    timeLeft = Math.max(0, timeLeft - 0.1);
+                    updateUI();
+                    if(timeLeft <= 0) endGame();
+                }, 100);
+                
+                draw();
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('startBtn').textContent = '🎮 PLAYING...';
+            }
+            
+            function initGame() {
+                resizeGameCanvas();
+                window.addEventListener('resize', resizeGameCanvas);
+                canvas.addEventListener('click', checkClick);
+                canvas.addEventListener('mousemove', (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+                    mouseX = (e.clientX - rect.left) * scaleX;
+                    mouseY = (e.clientY - rect.top) * scaleY;
+                });
+                draw();
+            }
+            
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            document.getElementById('backBtn').addEventListener('click', () => {
+                window.location.href = 'https://whyalucy.github.io/ScriptHUB.html';
+            });
+            
+            initGame();
+        })();
+    </script>
+</body>
+</html>
