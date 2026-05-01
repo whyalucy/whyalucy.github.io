@@ -28,7 +28,8 @@
 
         <div class="game-controls">
             <button id="startBtn" class="game-btn">▶ START GAME</button>
-            <button id="backBtn" class="game-btn back">◀ BACK TO HUB</button>
+            <button id="backhubBtn" class="game-btn back">◀ BACK TO HUB</button>
+            <button id="backmainBtn" class="game-btn back">◀ BACK TO MAIN</button>
         </div>
         <div class="game-info">
             💡 Click on glowing spots before they disappear!<br>
@@ -373,8 +374,11 @@
             }
             
             document.getElementById('startBtn').addEventListener('click', startGame);
-            document.getElementById('backBtn').addEventListener('click', () => {
+            document.getElementById('backhubBtn').addEventListener('click', () => {
                 window.location.href = 'https://whyalucy.github.io/ScriptHUB.html';
+            }
+            document.getElementById('backmainBtn').addEventListener('click', () => {
+                window.location.href = 'https://whyalucy.github.io/RXSCRIPTS.html';
             });
             
             initGame();
